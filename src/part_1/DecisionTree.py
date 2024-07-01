@@ -8,7 +8,7 @@ import pandas as pd
 from loguru import logger
 
 logger.remove()
-logger.add(sys.stderr, colorize=True, level="DEBUG")
+logger.add(sys.stderr, level="DEBUG")
 
 
 # metrics
@@ -35,9 +35,9 @@ class DecisionTreeClassifier:
 
     def __init__(self) -> None:
         self.tree = None
-        self.continue_map = np.array([0, 2, 3])
+        self.continue_map = np.array([0, 2, 3, 6, 7, 10, 12, 13])
         self.n_types_map = np.array(
-            [-1, 2, -1, -1, 4, 2, 810, 635, 2, 2, 1268, 2, 1190, 1129, 4, 5])
+            [-1, 2, -1, -1, 4, 2, -1, -1, 2, 2, -1, 2, -1, -1, 4, 5])
 
     def __str__(self) -> str:
         tree_str = ""
@@ -136,7 +136,6 @@ class DecisionTreeClassifier:
 
     def _gen_node(self, X: np.ndarray, y: np.ndarray,
                   A: np.ndarray) -> TreeNode:
-        logger.info(f"X: {X.shape}, y: {y.shape}, A: {A}")
         if self._if_all_same(y):
             return TreeNode(label=y[0])
         if self._if_feat_none_or_A_all_same(X, y, A):
@@ -213,16 +212,8 @@ class DecisionTreeClassifier:
 def load_data(
         datapath: str = './data/ObesityDataSet_raw_and_data_sinthetic.csv'):
     df = pd.read_csv(datapath)
-    continue_features = [
-        'Age',
-        'Height',
-        'Weight',
-    ]
-    discrete_features = [
-        'Gender', 'CALC', 'FAVC', 'FCVC', 'NCP', 'SCC', 'SMOKE', 'CH2O',
-        'family_history_with_overweight', 'FAF', 'TUE', 'CAEC', 'MTRANS'
-    ]
-
+    continue_features = ['Age', 'Height', 'Weight', 'FCVC', 'NCP', 'CH2O', 'FAF', 'TUE',]
+    discrete_features = ['Gender', 'CALC', 'FAVC', 'SCC', 'SMOKE', 'family_history_with_overweight', 'CAEC', 'MTRANS']
     X, y = df.iloc[:, :-1], df.iloc[:, -1]
     # encode discrete str to number, eg. male&female to 0&1
     labelencoder = LabelEncoder()
@@ -238,17 +229,20 @@ def load_data(
     return X_train, X_test, y_train, y_test
 
 
-@logger.catch
 def main():
+    logger.info("Decision Tree Classifier")
+    logger.info("Loading data")
     X_train, X_test, y_train, y_test = load_data(
         './data/ObesityDataSet_raw_and_data_sinthetic.csv')
     X_train, X_test, y_train, y_test = np.array(X_train), np.array(
         X_test), np.array(y_train), np.array(y_test)
+    logger.info("Training model")
     clf = DecisionTreeClassifier()
     clf.fit(X_train, y_train)
 
+    logger.info("Predicting")
     y_pred = clf.predict(X_test)
-    print(accuracy(y_test, y_pred))
+    logger.info(accuracy(y_test, y_pred))
 
 
 if __name__ == "__main__":
